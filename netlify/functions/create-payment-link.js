@@ -54,7 +54,8 @@ exports.handler = async (event) => {
     line_items: [{ price_data: priceData, quantity: 1 }],
     success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/`,
-    metadata: { kunde: navn, type }
+    metadata: { kunde: navn, type },
+        managed_payments: { enabled: false }
   };
 
   if (type === 'engang') {
