@@ -15,7 +15,7 @@ exports.handler = async (event) => {
 
   try {
     const store = getStore('betalinger');
-    const data = (await store.get('log', { type: 'json', consistency: 'strong' })) || [];
+    const data = (await store.get('log', { type: 'json' })) || [];
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

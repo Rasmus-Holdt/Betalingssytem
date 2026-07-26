@@ -51,7 +51,7 @@ exports.handler = async (event) => {
 
     try {
       const store = getStore('betalinger');
-      const existing = (await store.get('log', { type: 'json', consistency: 'strong' })) || [];
+      const existing = (await store.get('log', { type: 'json' })) || [];
       existing.unshift(record);
       await store.setJSON('log', existing);
     } catch (err) {
