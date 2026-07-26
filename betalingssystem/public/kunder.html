@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Betalinger</title>
+<style>
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:#f4f4f8; margin:0; padding:40px 20px;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  h1{font-size:22px; color:#1a1a2e;}
+  a.back{font-size:13px; color:#635bff; text-decoration:none; font-weight:600;}
+  table{width:100%; border-collapse:collapse; margin-top:20px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.06);}
+  th, td{text-align:left; padding:12px 14px; font-size:14px;}
+  th{background:#1a1a2e; color:#fff; font-weight:600;}
+  tr:nth-child(even){background:#fafafa;}
+  .empty{color:#6b7280; margin-top:20px; font-size:14px;}
+  .badge{padding:3px 8px; border-radius:20px; font-size:11px; font-weight:700; background:#dcfce7; color:#166534;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← Nyt betalingslink</a>
+  <h1>Betalinger</h1>
+  <div id="content">Henter…</div>
+</div>
+<script>
+fetch('/.netlify/functions/list-payments')
+  .then(r => r.json())
+  .then(data => {
+    const el = document.getElementById('content');
+    if (!data.length) {
+      el.innerHTML = '<p class="empty">Ingen betalinger endnu.</p>';
+      return;
+    }
+    let rows = data.map(p => `
+      <tr>
+        <td>${p.navn}</td>
+        <td>${p.beloeb} ${p.valuta}</td>
+        <td>${p.type === 'maaned' ? 'Månedligt' : 'Engang'}</td>
+        <td>${new Date(p.dato).toLocaleString('da-DK')}</td>
+        <td><span class="badge">Betalt</span></td>
+      </tr>
+    `).join('');
+    el.innerHTML = `
+      <table>
+        <thead><tr><th>Kunde</th><th>Beløb</th><th>Type</th><th>Dato</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  })
+  .catch(() => {
+    document.getElementById('content').innerHTML = '<p class="empty">Kunne ikke hente betalinger.</p>';
+  });
+</script>
+</body>
+</html>

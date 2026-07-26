@@ -1,0 +1,10 @@
+{
+  "name": "betalingssystem",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Betalingslink-system: opret Stripe-betalingslinks til kunder, modtag webhook, gem betalinger.",
+  "dependencies": {
+    "stripe": "^16.0.0",
+    "@netlify/blobs": "^7.0.0"
+  }
+}
