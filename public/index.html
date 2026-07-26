@@ -45,20 +45,17 @@
 <nav><a href="/kunder.html">Se betalinger →</a></nav>
 <div class="card">
   <h1>Opret betalingslink</h1>
-  <p class="sub">Udfyld kundens navn og prisen, så laver Stripe et betalingslink du kan sende.</p>
+  <p class="sub">Udfyld kundens navn og beløb. Du kan bruge engangsbeløb, månedligt beløb, eller begge dele i samme link – de bliver opkrævet sammen på én regning.</p>
 
   <form id="form">
     <label for="navn">Kundenavn</label>
     <input id="navn" name="navn" type="text" placeholder="F.eks. Ribe Blomster" required>
 
-    <label for="pris">Pris (kr.)</label>
-    <input id="pris" name="pris" type="number" min="1" step="0.01" placeholder="500" required>
+    <label for="engangsbeloeb">Engangsbeløb (kr.)</label>
+    <input id="engangsbeloeb" name="engangsbeloeb" type="number" min="0" step="0.01" placeholder="500 (valgfrit)">
 
-    <label for="type">Betalingstype</label>
-    <select id="type" name="type">
-      <option value="engang">Engangsbeløb</option>
-      <option value="maaned">Månedligt abonnement</option>
-    </select>
+    <label for="maanedligbeloeb">Månedligt beløb (kr.)</label>
+    <input id="maanedligbeloeb" name="maanedligbeloeb" type="number" min="0" step="0.01" placeholder="200 (valgfrit)">
 
     <button type="submit" id="submitBtn">Lav betalingslink</button>
   </form>
@@ -79,20 +76,33 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Laver link…';
 
   const navn = document.getElementById('navn').value.trim();
-  const pris = parseFloat(document.getElementById('pris').value);
-  const type = document.getElementById('type').value;
+  const engangsbeloeb = document.getElementById('engangsbeloeb').value;
+  const maanedligbeloeb = document.getElementById('maanedligbeloeb').value;
+
+  if (!engangsbeloeb && !maanedligbeloeb) {
+    resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).';
+    resultEl.classList.add('error');
+    resultEl.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lav betalingslink';
+    return;
+  }
 
   try {
     const res = await fetch('/.netlify/functions/create-payment-link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ navn, pris, type })
+      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Noget gik galt');
 
+    const dele = [];
+    if (engangsbeloeb) dele.push(`${engangsbeloeb} kr. engang`);
+    if (maanedligbeloeb) dele.push(`${maanedligbeloeb} kr./måned`);
+
     resultEl.innerHTML = `
-      <div>Link til <strong>${navn}</strong> (${pris} kr. ${type === 'maaned' ? '/ måned' : 'engangs'}):</div>
+      <div>Link til <strong>${navn}</strong> (${dele.join(' + ')}):</div>
       <div style="margin-top:8px;"><a href="${data.url}" target="_blank" id="linkOut">${data.url}</a></div>
       <div class="row">
         <button type="button" id="copyBtn">Kopiér link</button>
