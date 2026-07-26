@@ -61,7 +61,11 @@ Du får desuden altid overblikket i **Stripe Dashboard → Payments**.
 ## Sådan bruger du systemet
 
 1. Gå til `https://dit-site.netlify.app`.
-2. Skriv kundenavn, pris i kr, og vælg engangsbeløb eller månedligt.
+2. Skriv kundenavn, og udfyld ét eller begge beløbsfelter:
+   - **Engangsbeløb** – opkræves med det samme.
+   - **Månedligt beløb** – starter et abonnement.
+   - Udfylder du begge, samles de i ét link/én regning (fx "Hjemmeside 500 kr.
+     engang + 200 kr. om måneden").
 3. Klik **Lav betalingslink** → kopiér linket → send det til kunden (SMS, mail, hvad du vil).
 4. Kunden betaler via Stripes betalingsside.
 5. Du får en e-mail, og betalingen dukker automatisk op på `/kunder.html`.

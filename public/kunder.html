@@ -35,18 +35,23 @@ fetch('/.netlify/functions/list-payments')
       el.innerHTML = '<p class="empty">Ingen betalinger endnu.</p>';
       return;
     }
-    let rows = data.map(p => `
-      <tr>
-        <td>${p.navn}</td>
-        <td>${p.beloeb} ${p.valuta}</td>
-        <td>${p.type === 'maaned' ? 'Månedligt' : 'Engang'}</td>
-        <td>${new Date(p.dato).toLocaleString('da-DK')}</td>
-        <td><span class="badge">Betalt</span></td>
-      </tr>
-    `).join('');
+    let rows = data.map(p => {
+      const dele = [];
+      if (p.engangsbeloeb > 0) dele.push(`${p.engangsbeloeb} ${p.valuta} engang`);
+      if (p.maanedligbeloeb > 0) dele.push(`${p.maanedligbeloeb} ${p.valuta}/måned`);
+      const beskrivelse = dele.join(' + ') || '–';
+      return `
+        <tr>
+          <td>${p.navn}</td>
+          <td>${beskrivelse}</td>
+          <td>${new Date(p.dato).toLocaleString('da-DK')}</td>
+          <td><span class="badge">Betalt</span></td>
+        </tr>
+      `;
+    }).join('');
     el.innerHTML = `
       <table>
-        <thead><tr><th>Kunde</th><th>Beløb</th><th>Type</th><th>Dato</th><th>Status</th></tr></thead>
+        <thead><tr><th>Kunde</th><th>Beløb</th><th>Dato</th><th>Status</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;

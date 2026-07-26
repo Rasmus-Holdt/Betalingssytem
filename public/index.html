@@ -1,130 +1,130 @@
 <!doctype html>
 <html lang="da">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Betalingslink – opret ny</title>
-  <style>
-      :root{
-            --bg:#0f172a; --card:#ffffff; --accent:#635bff; --text:#1a1a2e; --muted:#6b7280;
-      }
-      *{box-sizing:border-box;}
-      body{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg,#0f172a,#312e81);
-            min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:24px;
-      }
-      .card{
-            background:var(--card); border-radius:16px; padding:32px; max-width:440px; width:100%;
-            box-shadow:0 20px 60px rgba(0,0,0,.35);
-      }
-      h1{font-size:22px; margin:0 0 4px; color:var(--text);}
-      p.sub{color:var(--muted); margin:0 0 24px; font-size:14px;}
-      label{display:block; font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; margin-top:16px;}
-      label .hint{font-weight:400; color:var(--muted);}
-      input{
-            width:100%; padding:11px 12px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:15px;
-            outline:none; transition:border-color .15s;
-      }
-      input:focus{border-color:var(--accent);}
-      button{
-            margin-top:24px; width:100%; padding:13px; background:var(--accent); color:#fff; border:none;
-            border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .15s;
-      }
-      button:hover{opacity:.9;}
-      button:disabled{opacity:.6; cursor:not-allowed;}
-      #result{margin-top:20px; padding:16px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; display:none;}
-      #result.error{background:#fef2f2; border-color:#fecaca;}
-      #result a{word-break:break-all; color:var(--accent); font-weight:600;}
-      .row{display:flex; gap:8px; margin-top:10px;}
-      .row button{margin-top:0; width:auto; padding:8px 14px; font-size:13px; background:#1a1a2e;}
-      nav{position:fixed; top:20px; right:24px;}
-      nav a{color:#e0e7ff; text-decoration:none; font-size:13px; font-weight:600;}
-    </style>
-  </head>
-  <body>
-    <nav><a href="/kunder.html">Se betalinger →</a>a></nav>
-  <div class="card">
-    <h1>Opret betalingslink</h1>
-    <p class="sub">Udfyld kundens navn og beløb. Du kan udfylde ét eller begge felter – de bliver samlet i én regning/link.</p>p>
-  
-    <form id="form">
-        <label for="navn">Kundenavn</label>label>
-        <input id="navn" name="navn" type="text" placeholder="F.eks. Ribe Blomster" required>
-    
-        <label for="engangsbeloeb">Engangsbeløb (kr.) <span class="hint">– valgfri</span>span></label>label>
-        <input id="engangsbeloeb" name="engangsbeloeb" type="number" min="0" step="0.01" placeholder="500">
-    
-        <label for="maanedligbeloeb">Månedligt beløb (kr.) <span class="hint">– valgfri</span>span></label>label>
-        <input id="maanedligbeloeb" name="maanedligbeloeb" type="number" min="0" step="0.01" placeholder="200">
-    
-        <button type="submit" id="submitBtn">Lav betalingslink</button>button>
-    </form>form>
-  
-    <div id="result"></div>div>
-  </div>div>
-  
-  <script>
-    const form = document.getElementById('form');
-    const resultEl = document.getElementById('result');
-    const submitBtn = document.getElementById('submitBtn');
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Betalingslink – opret ny</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#ffffff; --accent:#635bff; --text:#1a1a2e; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg,#0f172a,#312e81);
+    min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card{
+    background:var(--card); border-radius:16px; padding:32px; max-width:440px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  h1{font-size:22px; margin:0 0 4px; color:var(--text);}
+  p.sub{color:var(--muted); margin:0 0 24px; font-size:14px;}
+  label{display:block; font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; margin-top:16px;}
+  label .hint{font-weight:400; color:var(--muted);}
+  input{
+    width:100%; padding:11px 12px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:15px;
+    outline:none; transition:border-color .15s;
+  }
+  input:focus{border-color:var(--accent);}
+  button{
+    margin-top:24px; width:100%; padding:13px; background:var(--accent); color:#fff; border:none;
+    border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; transition:opacity .15s;
+  }
+  button:hover{opacity:.9;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  #result{margin-top:20px; padding:16px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; display:none;}
+  #result.error{background:#fef2f2; border-color:#fecaca;}
+  #result a{word-break:break-all; color:var(--accent); font-weight:600;}
+  .row{display:flex; gap:8px; margin-top:10px;}
+  .row button{margin-top:0; width:auto; padding:8px 14px; font-size:13px; background:#1a1a2e;}
+  nav{position:fixed; top:20px; right:24px;}
+  nav a{color:#e0e7ff; text-decoration:none; font-size:13px; font-weight:600;}
+</style>
+</head>
+<body>
+<nav><a href="/kunder.html">Se betalinger →</a></nav>
+<div class="card">
+  <h1>Opret betalingslink</h1>
+  <p class="sub">Udfyld kundens navn og beløb. Du kan udfylde ét eller begge felter – de bliver samlet i én regning/link.</p>
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        resultEl.style.display = 'none';
-        resultEl.classList.remove('error');
+  <form id="form">
+    <label for="navn">Kundenavn</label>
+    <input id="navn" name="navn" type="text" placeholder="F.eks. Ribe Blomster" required>
 
-        const navn = document.getElementById('navn').value.trim();
-        const engangsRaw = document.getElementById('engangsbeloeb').value;
-        const maanedligRaw = document.getElementById('maanedligbeloeb').value;
-        const engangsbeloeb = engangsRaw === '' ? 0 : parseFloat(engangsRaw);
-        const maanedligbeloeb = maanedligRaw === '' ? 0 : parseFloat(maanedligRaw);
+    <label for="engangsbeloeb">Engangsbeløb (kr.) <span class="hint">– valgfri</span></label>
+    <input id="engangsbeloeb" name="engangsbeloeb" type="number" min="0" step="0.01" placeholder="500">
 
-        if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
-              resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).';
-              resultEl.classList.add('error');
-              resultEl.style.display = 'block';
-              return;
-        }
+    <label for="maanedligbeloeb">Månedligt beløb (kr.) <span class="hint">– valgfri</span></label>
+    <input id="maanedligbeloeb" name="maanedligbeloeb" type="number" min="0" step="0.01" placeholder="200">
 
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Laver link…';
+    <button type="submit" id="submitBtn">Lav betalingslink</button>
+  </form>
 
-        try {
-              const res = await fetch('/.netlify/functions/create-payment-link', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb })
-              });
-              const data = await res.json();
-              if (!res.ok) throw new Error(data.error || 'Noget gik galt');
+  <div id="result"></div>
+</div>
 
-              const dele = [];
-              if (engangsbeloeb > 0) dele.push(`${engangsbeloeb} kr. engang`);
-              if (maanedligbeloeb > 0) dele.push(`${maanedligbeloeb} kr./måned`);
+<script>
+const form = document.getElementById('form');
+const resultEl = document.getElementById('result');
+const submitBtn = document.getElementById('submitBtn');
 
-              resultEl.innerHTML = `
-                    <div>Link til <strong>${navn}</strong> (${dele.join(' + ')}):</div>
-                          <div style="margin-top:8px;"><a href="${data.url}" target="_blank" id="linkOut">${data.url}</a></div>
-                                <div class="row">
-                                        <button type="button" id="copyBtn">Kopiér link</button>
-                                              </div>
-                                                  `;
-              resultEl.style.display = 'block';
-              document.getElementById('copyBtn').addEventListener('click', () => {
-                      navigator.clipboard.writeText(data.url);
-                      document.getElementById('copyBtn').textContent = 'Kopieret!';
-              });
-              form.reset();
-        } catch (err) {
-              resultEl.textContent = 'Fejl: ' + err.message;
-              resultEl.classList.add('error');
-              resultEl.style.display = 'block';
-        } finally {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Lav betalingslink';
-        }
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  resultEl.style.display = 'none';
+  resultEl.classList.remove('error');
+
+  const navn = document.getElementById('navn').value.trim();
+  const engangsRaw = document.getElementById('engangsbeloeb').value;
+  const maanedligRaw = document.getElementById('maanedligbeloeb').value;
+  const engangsbeloeb = engangsRaw === '' ? 0 : parseFloat(engangsRaw);
+  const maanedligbeloeb = maanedligRaw === '' ? 0 : parseFloat(maanedligRaw);
+
+  if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
+    resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).';
+    resultEl.classList.add('error');
+    resultEl.style.display = 'block';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Laver link…';
+
+  try {
+    const res = await fetch('/.netlify/functions/create-payment-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb })
     });
-  </script>
-  </body>
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Noget gik galt');
+
+    const dele = [];
+    if (engangsbeloeb > 0) dele.push(`${engangsbeloeb} kr. engang`);
+    if (maanedligbeloeb > 0) dele.push(`${maanedligbeloeb} kr./måned`);
+
+    resultEl.innerHTML = `
+      <div>Link til <strong>${navn}</strong> (${dele.join(' + ')}):</div>
+      <div style="margin-top:8px;"><a href="${data.url}" target="_blank" id="linkOut">${data.url}</a></div>
+      <div class="row">
+        <button type="button" id="copyBtn">Kopiér link</button>
+      </div>
+    `;
+    resultEl.style.display = 'block';
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(data.url);
+      document.getElementById('copyBtn').textContent = 'Kopieret!';
+    });
+    form.reset();
+  } catch (err) {
+    resultEl.textContent = 'Fejl: ' + err.message;
+    resultEl.classList.add('error');
+    resultEl.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Lav betalingslink';
+  }
+});
+</script>
+</body>
 </html>
