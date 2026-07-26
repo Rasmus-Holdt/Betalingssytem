@@ -17,6 +17,13 @@
   .check{font-size:48px; margin-bottom:8px;}
   h1{font-size:20px; margin:0 0 8px; color:#1a1a2e;}
   p{color:#6b7280; font-size:14px;}
+  button{
+    margin-top:20px; width:100%; padding:12px; background:#635bff; color:#fff; border:none;
+    border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  button:hover:not(:disabled){opacity:.9;}
+  #portalError{color:#b91c1c; font-size:13px; margin-top:10px; display:none;}
 </style>
 </head>
 <body>
@@ -24,6 +31,44 @@
     <div class="check">✅</div>
     <h1>Tak for din betaling!</h1>
     <p>Betalingen er gennemført. Du modtager en kvittering fra Stripe på din e-mail.</p>
+    <div id="portalArea"></div>
+    <div id="portalError"></div>
   </div>
+
+<script>
+// Hvis betalingen indeholder et abonnement, kan kunden med det samme åbne
+// Stripes kundeportal for at se fakturaer eller opsige. Senere (fx via mail
+// fra Stripe) kan de vende tilbage til portalen igen uden dette link.
+const params = new URLSearchParams(window.location.search);
+const sessionId = params.get('session_id');
+
+if (sessionId) {
+  const portalArea = document.getElementById('portalArea');
+  const errorEl = document.getElementById('portalError');
+  const btn = document.createElement('button');
+  btn.textContent = 'Administrer mit abonnement';
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = 'Åbner…';
+    errorEl.style.display = 'none';
+    try {
+      const res = await fetch('/.netlify/functions/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Noget gik galt');
+      window.location.href = data.url;
+    } catch (err) {
+      errorEl.textContent = 'Denne betaling er nok et engangsbeløb uden abonnement, eller: ' + err.message;
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Administrer mit abonnement';
+    }
+  });
+  portalArea.appendChild(btn);
+}
+</script>
 </body>
 </html>

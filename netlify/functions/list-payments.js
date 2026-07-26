@@ -8,6 +8,21 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Kun GET er tilladt' }) };
   }
 
+  // Kundelisten er følsom data (navne + beløb), så den kræver en hemmelig
+  // adgangskode sat som miljøvariablen ADMIN_PASSWORD i Netlify. Koden sendes
+  // fra kunder.html som header x-admin-password.
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'ADMIN_PASSWORD mangler i Netlify-miljøvariablerne.' })
+    };
+  }
+  const givenPassword = event.headers['x-admin-password'] || '';
+  if (givenPassword !== adminPassword) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Forkert adgangskode.' }) };
+  }
+
   // Funktionen bruger den klassiske "Lambda-kompatible" handler-syntaks, hvor
   // Netlify Blobs ikke initialiseres automatisk. connectLambda() skal derfor
   // kaldes manuelt med event'et, før getStore() kan bruges.

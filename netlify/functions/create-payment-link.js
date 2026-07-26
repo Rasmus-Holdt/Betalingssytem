@@ -20,6 +20,22 @@ exports.handler = async (event) => {
     };
   }
 
+  // Linkgeneratoren er kun til dig selv, så den kræver samme adgangskode som
+  // kundelisten (ADMIN_PASSWORD i Netlify), sendt fra index.html som header
+  // x-admin-password. Det forhindrer at andre end dig kan oprette
+  // betalingslinks under din Stripe-konto.
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'ADMIN_PASSWORD mangler i Netlify-miljøvariablerne.' })
+    };
+  }
+  const givenPassword = event.headers['x-admin-password'] || '';
+  if (givenPassword !== adminPassword) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Forkert adgangskode.' }) };
+  }
+
   let payload;
   try {
     payload = JSON.parse(event.body || '{}');
@@ -36,6 +52,7 @@ exports.handler = async (event) => {
 
   const engangsbeloeb = toAmount(payload.engangsbeloeb);
   const maanedligbeloeb = toAmount(payload.maanedligbeloeb);
+  const proeveperiodeDage = Math.round(toAmount(payload.proeveperiodeDage));
 
   if (!navn) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Kundenavn mangler.' }) };
@@ -45,6 +62,9 @@ exports.handler = async (event) => {
   }
   if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).' }) };
+  }
+  if (Number.isNaN(proeveperiodeDage) || proeveperiodeDage < 0) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Prøveperiode skal være et positivt antal dage.' }) };
   }
 
   const stripe = Stripe(secretKey);
@@ -104,6 +124,11 @@ exports.handler = async (event) => {
     // customer_creation er kun tilladt i "payment"-mode, ikke "subscription"
     // (Stripe opretter altid en kunde selv når der er et abonnement med).
     sessionParams.customer_creation = 'always';
+  } else if (proeveperiodeDage > 0) {
+    // Gratis prøveperiode gælder kun det månedlige/tilbagevendende beløb.
+    // Et evt. engangsbeløb i samme kurv bliver stadig opkrævet med det samme
+    // ved checkout – prøveperioden udskyder kun den første abonnementsfaktura.
+    sessionParams.subscription_data = { trial_period_days: proeveperiodeDage };
   }
 
   try {

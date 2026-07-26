@@ -40,11 +40,25 @@
   .row button{margin-top:0; width:auto; padding:8px 14px; font-size:13px; background:#1a1a2e;}
   nav{position:fixed; top:20px; right:24px;}
   nav a{color:#e0e7ff; text-decoration:none; font-size:13px; font-weight:600;}
+  #gateError{color:#b91c1c; font-size:13px; margin-top:10px; display:none;}
+  .hidden{display:none !important;}
 </style>
 </head>
 <body>
 <nav><a href="/kunder.html">Se betalinger →</a></nav>
-<div class="card">
+
+<div class="card" id="gate">
+  <h1>Log ind</h1>
+  <p class="sub">Denne side er kun til dig. Indtast din adgangskode.</p>
+  <form id="gateForm">
+    <label for="gatePassword">Adgangskode</label>
+    <input id="gatePassword" name="gatePassword" type="password" required>
+    <button type="submit">Log ind</button>
+    <div id="gateError">Forkert adgangskode.</div>
+  </form>
+</div>
+
+<div class="card hidden" id="app">
   <h1>Opret betalingslink</h1>
   <p class="sub">Udfyld kundens navn og beløb. Du kan udfylde ét eller begge felter – de bliver samlet i én regning/link.</p>
 
@@ -58,6 +72,9 @@
     <label for="maanedligbeloeb">Månedligt beløb (kr.) <span class="hint">– valgfri</span></label>
     <input id="maanedligbeloeb" name="maanedligbeloeb" type="number" min="0" step="0.01" placeholder="200">
 
+    <label for="proeveperiodeDage">Gratis prøveperiode <span class="hint">– valgfri, kun for det månedlige beløb</span></label>
+    <input id="proeveperiodeDage" name="proeveperiodeDage" type="number" min="0" step="1" placeholder="Antal dage, fx 14">
+
     <button type="submit" id="submitBtn">Lav betalingslink</button>
   </form>
 
@@ -65,6 +82,44 @@
 </div>
 
 <script>
+// --- Adgangskode-gate ---
+// Siden er kun til dig selv, så den gemmer en adgangskode i sessionStorage
+// (kun for denne fane, indtil den lukkes) og sender den med som header
+// x-admin-password til funktionerne, som selv tjekker den mod ADMIN_PASSWORD
+// sat i Netlify. Det er ikke bankniveau-sikkerhed, men langt bedre end at
+// linkgeneratoren står helt åben for alle.
+const gate = document.getElementById('gate');
+const app = document.getElementById('app');
+const gateForm = document.getElementById('gateForm');
+const gateError = document.getElementById('gateError');
+
+function getAdminPassword() {
+  return sessionStorage.getItem('adminPassword') || '';
+}
+
+function showApp() {
+  gate.classList.add('hidden');
+  app.classList.remove('hidden');
+}
+
+function showGate(withError) {
+  app.classList.add('hidden');
+  gate.classList.remove('hidden');
+  gateError.style.display = withError ? 'block' : 'none';
+}
+
+if (getAdminPassword()) {
+  showApp();
+}
+
+gateForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const value = document.getElementById('gatePassword').value;
+  sessionStorage.setItem('adminPassword', value);
+  showApp();
+});
+
+// --- Opret betalingslink ---
 const form = document.getElementById('form');
 const resultEl = document.getElementById('result');
 const submitBtn = document.getElementById('submitBtn');
@@ -77,8 +132,10 @@ form.addEventListener('submit', async (e) => {
   const navn = document.getElementById('navn').value.trim();
   const engangsRaw = document.getElementById('engangsbeloeb').value;
   const maanedligRaw = document.getElementById('maanedligbeloeb').value;
+  const proeveperiodeRaw = document.getElementById('proeveperiodeDage').value;
   const engangsbeloeb = engangsRaw === '' ? 0 : parseFloat(engangsRaw);
   const maanedligbeloeb = maanedligRaw === '' ? 0 : parseFloat(maanedligRaw);
+  const proeveperiodeDage = proeveperiodeRaw === '' ? 0 : parseInt(proeveperiodeRaw, 10);
 
   if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
     resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).';
@@ -93,15 +150,29 @@ form.addEventListener('submit', async (e) => {
   try {
     const res = await fetch('/.netlify/functions/create-payment-link', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': getAdminPassword()
+      },
+      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb, proeveperiodeDage })
     });
+
+    if (res.status === 401) {
+      sessionStorage.removeItem('adminPassword');
+      showGate(true);
+      return;
+    }
+
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Noget gik galt');
 
     const dele = [];
     if (engangsbeloeb > 0) dele.push(`${engangsbeloeb} kr. engang`);
-    if (maanedligbeloeb > 0) dele.push(`${maanedligbeloeb} kr./måned`);
+    if (maanedligbeloeb > 0) {
+      dele.push(proeveperiodeDage > 0
+        ? `${maanedligbeloeb} kr./måned (${proeveperiodeDage} dages gratis prøveperiode)`
+        : `${maanedligbeloeb} kr./måned`);
+    }
 
     resultEl.innerHTML = `
       <div>Link til <strong>${navn}</strong> (${dele.join(' + ')}):</div>
