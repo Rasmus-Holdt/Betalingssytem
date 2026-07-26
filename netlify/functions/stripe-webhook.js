@@ -6,12 +6,17 @@
 // Dashboard > Settings > Notifications (se instruktionerne).
 
 const Stripe = require('stripe');
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Kun POST er tilladt' };
   }
+
+  // Funktionen bruger den klassiske "Lambda-kompatible" handler-syntaks, hvor
+  // Netlify Blobs ikke initialiseres automatisk. connectLambda() skal derfor
+  // kaldes manuelt med event'et, før getStore() kan bruges.
+  connectLambda(event);
 
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

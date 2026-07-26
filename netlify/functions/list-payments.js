@@ -1,12 +1,17 @@
 // Returnerer listen af betalinger, som stripe-webhook.js har gemt i Netlify Blobs.
 // Bruges af public/kunder.html
 
-const { getStore } = require('@netlify/blobs');
+const { getStore, connectLambda } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Kun GET er tilladt' }) };
   }
+
+  // Funktionen bruger den klassiske "Lambda-kompatible" handler-syntaks, hvor
+  // Netlify Blobs ikke initialiseres automatisk. connectLambda() skal derfor
+  // kaldes manuelt med event'et, før getStore() kan bruges.
+  connectLambda(event);
 
   try {
     const store = getStore('betalinger');
