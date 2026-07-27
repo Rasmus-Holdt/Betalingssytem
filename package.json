@@ -2,9 +2,8 @@
   "name": "betalingssystem",
   "version": "1.0.0",
   "private": true,
-  "description": "Betalingslink-system: opret Stripe-betalingslinks til kunder, modtag webhook, gem betalinger.",
+  "description": "Betalingslink-system: opret Stripe-betalingslinks til kunder. Betalinger og kunder ses direkte i Stripe Dashboard.",
   "dependencies": {
-    "stripe": "^16.0.0",
-    "@netlify/blobs": "^7.0.0"
+    "stripe": "^16.0.0"
   }
 }
