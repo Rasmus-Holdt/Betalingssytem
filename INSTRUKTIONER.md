@@ -76,9 +76,13 @@ Stripe sender selv e-mails til dig — du skal ikke bygge noget til det:
    - **Månedligt beløb** – starter et abonnement.
    - Udfylder du begge, samles de i ét link/én regning (fx "Hjemmeside 500 kr.
      engang + 200 kr. om måneden").
-   - **Gratis prøveperiode** (valgfri, kun ved månedligt beløb) – antal dage
-     kunden ikke bliver opkrævet det månedlige beløb. Et evt. engangsbeløb i
+   - **Gratis prøveperiode** (valgfri, kun ved månedlige beløb) – antal dage
+     kunden ikke bliver opkrævet de månedlige beløb. Et evt. engangsbeløb i
      samme link bliver stadig opkrævet med det samme, uanset prøveperiode.
+   - **Ekstra poster** (valgfri) – klik **"+ Tilføj felt"** for at oprette dine
+     egne navngivne beløb (fx "Hosting", "Ekstra side", "Logo"), hver med sin
+     egen pris og type (engang eller månedligt). Klik **"Slet"** på en række
+     for at fjerne den igen. De lægges oveni de faste felter i samme link/regning.
 3. Klik **Lav betalingslink** → kopiér linket → send det til kunden (SMS, mail, hvad du vil).
 4. Kunden betaler via Stripes betalingsside.
 5. Du får en e-mail, og betalingen ses med det samme i **Stripe Dashboard →
@@ -116,3 +120,9 @@ Husk også at aktivere Customer Portal i live-mode (trin 5 gælder separat for t
 - **Kan ikke finde en betaling** → tjek at du kigger i det rigtige Stripe-mode
   (Test mode-knappen øverst i Stripe Dashboard) — testbetalinger vises kun i
   test mode, ikke i live mode.
+- **MobilePay vises ikke som betalingsmulighed** → MobilePay understøtter ikke
+  abonnementer. Så snart linket indeholder et månedligt beløb (fast eller som
+  en ekstra post), skifter Stripe automatisk til abonnement-mode, og så
+  forsvinder MobilePay som mulighed – det er en begrænsning hos Stripe/MobilePay,
+  ikke noget der kan rettes i koden. MobilePay vises kun på links med **kun**
+  engangsbeløb (ingen månedlige poster overhovedet).

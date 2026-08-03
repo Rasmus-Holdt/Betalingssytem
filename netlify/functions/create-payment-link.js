@@ -60,17 +60,40 @@ exports.handler = async (event) => {
   if (Number.isNaN(engangsbeloeb) || engangsbeloeb < 0 || Number.isNaN(maanedligbeloeb) || maanedligbeloeb < 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Beløbene skal være positive tal.' }) };
   }
-  if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).' }) };
-  }
   if (Number.isNaN(proeveperiodeDage) || proeveperiodeDage < 0) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Prøveperiode skal være et positivt antal dage.' }) };
+  }
+
+  // Ekstra poster: fritvalgte, navngivne beløb du selv opretter i formularen
+  // ("+ Tilføj felt"). Hver post er enten et engangsbeløb eller en månedlig
+  // tilbagevendende betaling, ligesom de faste felter ovenfor.
+  const ekstraPosterRaw = Array.isArray(payload.ekstraPoster) ? payload.ekstraPoster : [];
+  const ekstraPoster = [];
+  for (const raw of ekstraPosterRaw) {
+    const itemNavn = ((raw && raw.navn) || '').toString().trim();
+    if (!itemNavn) continue; // spring tomme rækker over
+    const itemBeloeb = toAmount(raw && raw.beloeb);
+    if (Number.isNaN(itemBeloeb) || itemBeloeb <= 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: `Beløbet for "${itemNavn}" skal være et positivt tal.` }) };
+    }
+    const itemType = (raw && raw.type === 'maanedlig') ? 'maanedlig' : 'engang';
+    ekstraPoster.push({ navn: itemNavn, beloeb: itemBeloeb, type: itemType });
+  }
+
+  if (engangsbeloeb <= 0 && maanedligbeloeb <= 0 && ekstraPoster.length === 0) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Udfyld mindst ét beløb (engangsbeløb, månedligt beløb, eller en ekstra post).' }) };
   }
 
   const stripe = Stripe(secretKey);
 
   // Netlify sætter altid URL til det aktive site (både prod og deploy-previews)
   const siteUrl = process.env.URL || `https://${event.headers.host}`;
+
+  // "harMaanedlig" tæller også ekstra poster af typen "maanedlig", fordi
+  // Stripe kræver mode "subscription" så snart ÉT eneste linje-item i
+  // sessionen er tilbagevendende – uanset om det er det faste månedlige
+  // felt eller en af de brugerdefinerede ekstra poster.
+  const harMaanedlig = maanedligbeloeb > 0 || ekstraPoster.some((item) => item.type === 'maanedlig');
 
   const lineItems = [];
 
@@ -85,9 +108,7 @@ exports.handler = async (event) => {
     });
   }
 
-  const harMaanedlig = maanedligbeloeb > 0;
-
-  if (harMaanedlig) {
+  if (maanedligbeloeb > 0) {
     lineItems.push({
       price_data: {
         currency: 'dkk',
@@ -98,6 +119,18 @@ exports.handler = async (event) => {
       quantity: 1
     });
   }
+
+  ekstraPoster.forEach((item) => {
+    const priceData = {
+      currency: 'dkk',
+      product_data: { name: `${item.navn} – ${navn}` },
+      unit_amount: Math.round(item.beloeb * 100) // øre
+    };
+    if (item.type === 'maanedlig') {
+      priceData.recurring = { interval: 'month' };
+    }
+    lineItems.push({ price_data: priceData, quantity: 1 });
+  });
 
   // Stripe kræver mode "subscription" så snart der er et tilbagevendende
   // beløb med i kurven – et evt. engangsbeløb bliver så lagt på samme
@@ -111,7 +144,8 @@ exports.handler = async (event) => {
     metadata: {
       kunde: navn,
       engangsbeloeb: String(engangsbeloeb),
-      maanedligbeloeb: String(maanedligbeloeb)
+      maanedligbeloeb: String(maanedligbeloeb),
+      ekstraPoster: ekstraPoster.length ? JSON.stringify(ekstraPoster) : ''
     },
     // Nogle Stripe-konti har "Managed Payments" slået til som standard.
     // Det gør Stripe/Link til "merchant of record" (kvitteringer, kundesupport

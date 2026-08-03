@@ -42,6 +42,13 @@
   nav a{color:#e0e7ff; text-decoration:none; font-size:13px; font-weight:600;}
   #gateError{color:#b91c1c; font-size:13px; margin-top:10px; display:none;}
   .hidden{display:none !important;}
+  .ekstra-rows{margin-top:8px;}
+  .ekstra-row{display:flex; gap:8px; align-items:flex-end; margin-bottom:10px;}
+  .ekstra-row .felt{flex:1; min-width:0;}
+  .ekstra-row .felt.navn{flex:1.4;}
+  .ekstra-row label{margin-top:0; margin-bottom:4px;}
+  button.tilfoej-btn{margin-top:4px; width:auto; padding:9px 14px; font-size:13px; background:#eef2ff; color:var(--accent); border:1.5px dashed var(--accent);}
+  button.ekstra-slet{margin-top:0; width:auto; padding:11px 12px; font-size:13px; background:#fee2e2; color:#b91c1c; flex:0 0 auto;}
 </style>
 </head>
 <body>
@@ -72,8 +79,12 @@
     <label for="maanedligbeloeb">Månedligt beløb (kr.) <span class="hint">– valgfri</span></label>
     <input id="maanedligbeloeb" name="maanedligbeloeb" type="number" min="0" step="0.01" placeholder="200">
 
-    <label for="proeveperiodeDage">Gratis prøveperiode <span class="hint">– valgfri, kun for det månedlige beløb</span></label>
+    <label for="proeveperiodeDage">Gratis prøveperiode <span class="hint">– valgfri, kun for månedlige beløb</span></label>
     <input id="proeveperiodeDage" name="proeveperiodeDage" type="number" min="0" step="1" placeholder="Antal dage, fx 14">
+
+    <label>Ekstra poster <span class="hint">– valgfri, dine egne navngivne beløb</span></label>
+    <div class="ekstra-rows" id="ekstraRows"></div>
+    <button type="button" class="tilfoej-btn" id="tilfoejFeltBtn">+ Tilføj felt</button>
 
     <button type="submit" id="submitBtn">Lav betalingslink</button>
   </form>
@@ -119,6 +130,48 @@ gateForm.addEventListener('submit', (e) => {
   showApp();
 });
 
+// --- Ekstra poster (dynamiske, brugerdefinerede felter) ---
+// Kan tilføjes/slettes frit, hver med eget navn, beløb og type (engang/månedligt).
+const ekstraRows = document.getElementById('ekstraRows');
+const tilfoejFeltBtn = document.getElementById('tilfoejFeltBtn');
+
+function tilfoejEkstraRow() {
+  const row = document.createElement('div');
+  row.className = 'ekstra-row';
+  row.innerHTML = `
+    <div class="felt navn">
+      <label>Navn</label>
+      <input type="text" class="ekstra-navn" placeholder="F.eks. Hosting">
+    </div>
+    <div class="felt">
+      <label>Beløb (kr.)</label>
+      <input type="number" class="ekstra-beloeb" min="0" step="0.01" placeholder="100">
+    </div>
+    <div class="felt">
+      <label>Type</label>
+      <select class="ekstra-type">
+        <option value="engang">Engang</option>
+        <option value="maanedlig">Månedligt</option>
+      </select>
+    </div>
+    <button type="button" class="ekstra-slet">Slet</button>
+  `;
+  row.querySelector('.ekstra-slet').addEventListener('click', () => row.remove());
+  ekstraRows.appendChild(row);
+}
+
+tilfoejFeltBtn.addEventListener('click', tilfoejEkstraRow);
+
+function hentEkstraPoster() {
+  return Array.from(document.querySelectorAll('.ekstra-row'))
+    .map((row) => ({
+      navn: row.querySelector('.ekstra-navn').value.trim(),
+      beloeb: row.querySelector('.ekstra-beloeb').value,
+      type: row.querySelector('.ekstra-type').value
+    }))
+    .filter((item) => item.navn && item.beloeb !== '' && Number(item.beloeb) > 0);
+}
+
 // --- Opret betalingslink ---
 const form = document.getElementById('form');
 const resultEl = document.getElementById('result');
@@ -136,9 +189,10 @@ form.addEventListener('submit', async (e) => {
   const engangsbeloeb = engangsRaw === '' ? 0 : parseFloat(engangsRaw);
   const maanedligbeloeb = maanedligRaw === '' ? 0 : parseFloat(maanedligRaw);
   const proeveperiodeDage = proeveperiodeRaw === '' ? 0 : parseInt(proeveperiodeRaw, 10);
+  const ekstraPoster = hentEkstraPoster();
 
-  if (engangsbeloeb <= 0 && maanedligbeloeb <= 0) {
-    resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb eller månedligt beløb).';
+  if (engangsbeloeb <= 0 && maanedligbeloeb <= 0 && ekstraPoster.length === 0) {
+    resultEl.textContent = 'Udfyld mindst ét beløb (engangsbeløb, månedligt beløb, eller en ekstra post).';
     resultEl.classList.add('error');
     resultEl.style.display = 'block';
     return;
@@ -154,7 +208,7 @@ form.addEventListener('submit', async (e) => {
         'Content-Type': 'application/json',
         'x-admin-password': getAdminPassword()
       },
-      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb, proeveperiodeDage })
+      body: JSON.stringify({ navn, engangsbeloeb, maanedligbeloeb, proeveperiodeDage, ekstraPoster })
     });
 
     if (res.status === 401) {
@@ -173,6 +227,9 @@ form.addEventListener('submit', async (e) => {
         ? `${maanedligbeloeb} kr./måned (${proeveperiodeDage} dages gratis prøveperiode)`
         : `${maanedligbeloeb} kr./måned`);
     }
+    ekstraPoster.forEach((item) => {
+      dele.push(item.type === 'maanedlig' ? `${item.navn}: ${item.beloeb} kr./måned` : `${item.navn}: ${item.beloeb} kr. engang`);
+    });
 
     resultEl.innerHTML = `
       <div>Link til <strong>${navn}</strong> (${dele.join(' + ')}):</div>
@@ -187,6 +244,7 @@ form.addEventListener('submit', async (e) => {
       document.getElementById('copyBtn').textContent = 'Kopieret!';
     });
     form.reset();
+    ekstraRows.innerHTML = '';
   } catch (err) {
     resultEl.textContent = 'Fejl: ' + err.message;
     resultEl.classList.add('error');
